@@ -1,0 +1,48 @@
+.hc-parent {}
+
+.hc-canvas {
+    position: absolute;
+    z-index: 0;
+    font-size: x-large;
+    font-weight: 300;
+    border: dashed 1px #000;
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.hc-debug-info {
+    background-color: rgb(222, 222, 222);
+    padding: 10px;
+    position: absolute;
+    z-index: 1;
+    margin: 10px;
+}
+
+.hc-debug-info-header {
+    font-weight: 700;
+    padding-bottom: 5px;
+}
+
+.hc-debug-info-body {
+    font-size: smaller;
+}
+
+.hc-debug-info-label {
+    font-weight: 300;
+}
+
+.hc-debug-info-value {
+    font-weight: 700;
+}
+
+.hc-canvas-container {
+    position: relative;
+    height: calc(100vh - 95px);
+    width: calc(100vw - 44px);
+}
+  
+.hc-canvas-container-center {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
