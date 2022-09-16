@@ -21,7 +21,7 @@ class HilbertCurveStage extends React.Component {
       hcRawDimension: Math.pow(2.0, this.props.settings.sampleOrder),
       hcScale: Constants.defaultLineScale,
       hcPadding: Constants.defaultHcPadding,
-      lineEnc: this.props.lineEnc,
+      // lineEnc: this.props.lineEnc,
     };
     this.hilbertCurveRef = React.createRef();
   }
@@ -45,12 +45,12 @@ class HilbertCurveStage extends React.Component {
           // console.log(`(HC) cSamples ${JSON.stringify(cSamples[0])}`);
           let newCSamples = cSamples[0];
           // const newHcKey = this.state.hcKey + 1;
-          const newLineEnc = (newCSamples.lineEnc) ? newCSamples.lineEnc : null;
+          // const newLineEnc = (newCSamples.lineEnc) ? newCSamples.lineEnc : null;
           this.setState({
             // hcKey: newHcKey,
             cSamples: newCSamples,
             nCSamples: newCSamples.data.length,
-            lineEnc: newLineEnc
+            // lineEnc: newLineEnc
           }, () => {
             // console.log(`(HC) retrieved cSamples: ${JSON.stringify(this.state.cSamples)}`);
             // console.log(`newLineEnc ${this.state.lineEnc}`);
@@ -70,9 +70,10 @@ class HilbertCurveStage extends React.Component {
   drawGraphics = async (g, app) => {
     console.log(`HilbertCurveStage - drawGraphics`);
 
-    const { cSamples, lineEnc } = this.state;
+    // const { cSamples, lineEnc } = this.state;
+    const { cSamples } = this.state;
 
-    if ( !g || !cSamples || lineEnc || this.props.lineEnc ) return;
+    if ( !g || !cSamples || this.props.lineEnc ) return;
 
     g.position.set(0, 0);
 
@@ -169,7 +170,7 @@ class HilbertCurveStage extends React.Component {
                     ]}
                     >
                     {
-                    (this.state.lineEnc) 
+                    (this.props.lineEnc)
                     ? 
                     <AppConsumer>
                       {
@@ -177,7 +178,7 @@ class HilbertCurveStage extends React.Component {
                         console.log(`rendering from Sprite`);
                         return (
                           <Sprite
-                            image={this.state.lineEnc}
+                            image={this.props.lineEnc}
                           />
                         );
                       }
