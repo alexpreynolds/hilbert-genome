@@ -9,7 +9,7 @@ import Dexie from 'dexie';
 
 import { debounce } from 'debounce';
 
-import HilbertCurve from "./HilbertCurve";
+import HilbertCurveStage from "./HilbertCurveStage";
 
 import * as Helpers from "../Helpers.js";
 import * as Constants from "../Constants.js";
@@ -19,11 +19,11 @@ class Viewer extends React.Component {
   constructor(props) {
     super(props);
 
-    const chromosomes = Helpers.chromosomes(Constants.chromosomeSizes);
+    const chromosomes = Helpers.chromosomes(Constants.chromosomeMetadata);
     const chromosomeSize = d3.sum(chromosomes, d => d.size);
     const db = new Dexie(Constants.storageDatabaseName);
     db.version(1).stores({
-      hilbertCurves: '&name, data'
+      hilbertCurves: Constants.storageDatabaseFields,
     });
     db.open();
     // db.tables.forEach(t => console.log(`db tbl ${JSON.stringify(t.name)}`));
@@ -43,7 +43,6 @@ class Viewer extends React.Component {
         width: 0,
         height: 0,
       },
-      hcData: null,
       storageKey: initialStorageKey,
       storageOperationTime: 0,
       storageRetrievedFromCache: false,
@@ -51,10 +50,11 @@ class Viewer extends React.Component {
       chromosomeSize: chromosomeSize,
       baseOrder: Math.log(chromosomeSize) / Math.log(4),
       viewOrder: Constants.defaultSampleOrder,
-      totalSamples: 8192 * Constants.defaultSampleOrder,
+      sampleMultiplier: Constants.defaultSampleMultiplier,
+      totalSamples: Constants.defaultSampleMultiplier * Constants.defaultSampleOrder,
     };
 
-    this.hilbertCurveRef = React.createRef();
+    this.hilbertCurveStageRef = React.createRef();
 
     this.updateHcData();
   }
@@ -70,8 +70,8 @@ class Viewer extends React.Component {
 
   updateDimensions = debounce((e) => {
     const newHcDimensions = {
-      width: this.hilbertCurveRef.current.clientWidth,
-      height: this.hilbertCurveRef.current.clientHeight,
+      width: this.hilbertCurveStageRef.current.clientWidth,
+      height: this.hilbertCurveStageRef.current.clientHeight,
     };
     this.setState({
       hcDimensions: newHcDimensions,
@@ -79,7 +79,7 @@ class Viewer extends React.Component {
   }, Constants.updateDimensionsResizeTime);
 
   updateHcData = debounce(async () => {
-    // console.log(`cSamples (true) ${JSON.stringify(cSamples)}`);
+    // console.log(`Viewer - updateHcData`);
     try {
       if (this.state.database && this.state.database.hilbertCurves) {
         const db = this.state.database.hilbertCurves;
@@ -101,25 +101,39 @@ class Viewer extends React.Component {
           await db.add({
             name: this.state.storageKey,
             data: newHCData,
+            lineEnc: null,
           });
           const addEnd = performance.now();
           this.setState({
             storageOperationTime: (queryEnd - queryStart) + (addEnd - addStart),
             storageRetrievedFromCache: false,
+          }, () => {
+            if (this.state.hcDimensions.width > 0 && this.state.hcDimensions.height > 0) {
+              // console.log(`Updating HC...`);
+              const newHilbertCurveKey = this.state.hcKey + 1;
+              this.setState({
+                hcKey: newHilbertCurveKey,
+              });
+            }
           });
         }
         else {
           // console.log(`cSamples already at [${this.state.storageKey}]}`);
+          const currentHCData = await db.where({'name' : this.state.storageKey}).toArray();
+          const newLineEnc = currentHCData[0].lineEnc;
+          // console.log(`lineEnc ${newLineEnc}`);
           this.setState({
             storageOperationTime: queryEnd - queryStart,
             storageRetrievedFromCache: true,
-          });
-        }
-        if (this.state.hcDimensions.width > 0 && this.state.hcDimensions.height > 0) {
-          // console.log(`Updating HC...`);
-          const newHilbertCurveKey = this.state.hcKey + 1;
-          this.setState({
-            hcKey: newHilbertCurveKey,
+          }, () => {
+            if (this.state.hcDimensions.width > 0 && this.state.hcDimensions.height > 0) {
+              // console.log(`Updating HC...`);
+              const newHcKey = this.state.hcKey + 1;
+              this.setState({
+                hcKey: newHcKey,
+                lineEnc: newLineEnc,
+              });
+            }
           });
         }
       }
@@ -146,7 +160,7 @@ class Viewer extends React.Component {
       // console.log(`newStorageKey ${newStorageKey}`);
       this.setState({
         viewOrder: newData.sampleOrder,
-        totalSamples: 8192 * newData.sampleOrder,
+        totalSamples: this.state.sampleMultiplier * newData.sampleOrder,
         storageKey: newStorageKey,
       }, () => {
         // console.log(`new storage key: ${this.state.storageKey}`)
@@ -166,7 +180,7 @@ class Viewer extends React.Component {
         .then(() => {
           // console.log("Database successfully deleted!");
           db.version(1).stores({
-            hilbertCurves: '&name, data',
+            hilbertCurves: Constants.storageDatabaseFields,
           });
           db.open();
           if (this.state.hcDimensions.width > 0 && this.state.hcDimensions.height > 0) {
@@ -183,6 +197,7 @@ class Viewer extends React.Component {
   }
 
   render() {
+    // console.log(`Viewer - render`);
 
     const { settings, hcDimensions } = this.state;
 
@@ -207,9 +222,9 @@ class Viewer extends React.Component {
             </DatGui>
           </div>
         </div>
-        <div ref={this.hilbertCurveRef} className="viewer-content" id="viewer-content">
+        <div ref={this.hilbertCurveStageRef} className="viewer-content" id="viewer-content">
           { (hcDimensions.width > 0 && hcDimensions.height > 0) ? 
-            <HilbertCurve 
+            <HilbertCurveStage 
               key={this.state.hcKey}
               database={this.state.database}
               storageKey={this.state.storageKey}
@@ -218,6 +233,7 @@ class Viewer extends React.Component {
               settings={settings} 
               onUpdate={this.handleHilbertCurveUpdate}
               dimensions={hcDimensions}
+              lineEnc={this.state.lineEnc}
             />
             :
             <div />

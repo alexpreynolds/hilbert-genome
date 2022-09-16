@@ -23,8 +23,8 @@
 }
 
 .viewer-content {
-    height: calc(100vh - 71px);
-    min-height: calc(100vh - 71px);
+    height: calc(100vh - 70px);
+    min-height: calc(100vh - 70px);
     width: calc(100vw - 20px);
     box-sizing:border-box;
     margin-top: 10px;

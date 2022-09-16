@@ -52,10 +52,10 @@ export const makePointsSample = ({
 } = {}) => 
 {
   const hilbert = d3Hilbert().order(order);
-  const states = 18;
+  // const states = 18;
   const s = d3.scaleLinear().domain([0, num]).range([start, end]);
   return d3.range(num).map((i) => {
-    // let p = Math.floor(i / num * Math.pow(4, order));
+    // const p = Math.floor(i / num * Math.pow(4, order));
     const p = Math.floor(s(i));
     const xy = hilbert.getXyAtVal(p);
     const state = 0; // epilogosData[chrom][i]; // Math.floor(Math.random() * states);
@@ -79,7 +79,7 @@ export const chromosomes = (chroms) => {
 
 export const chromosomeSuffixToIndex = () => {
   const os = {};
-  Constants.chromosomeSizes.forEach((v, k) => { 
+  Constants.chromosomeMetadata.forEach((v, k) => { 
     os[v.name] = k;
   });
   return os;
